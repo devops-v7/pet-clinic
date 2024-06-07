@@ -33,7 +33,7 @@ jobs:
         #pwd
         #ls -R
         set +e
-        curl -f -X POST -u '${{ secrets.TEST_DEVOPS }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{ github.event.repository.name }}' -d 'project=${{ github.event.repository.name }}' -d 'organization=curso-devsecops-usach-test' -d 'visibility=public'
+        curl -f -X POST -u '${{ secrets.TEST_DEVOPS }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{ github.event.repository.name }}' -d 'project=${{ github.event.repository.name }}' -d 'organization=devops-v7' -d 'visibility=public'
         if [ $? -ne 0 ]; then
           echo "Proyecto ya existe en Sonarcloud"
           echo "::set-output name=proyectoExiste::1"
