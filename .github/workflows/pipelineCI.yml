@@ -41,7 +41,7 @@ jobs:
           echo "Proyecto devops-v7_pet-clinic creado exitosamente en Sonarcloud"
           
           echo "Se establece rama main como rama por defecto"
-          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/set_branch_type' -d 'name=main' -d 'project=devops-v7_pet-clinic'
+          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/set_branch_type' -d 'project=devops-v7_pet-clinic' -d 'branch=main' -d 'type=MAIN'
         fi
         set -e
 
