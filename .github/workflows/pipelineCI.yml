@@ -74,8 +74,11 @@ jobs:
     - name: Run SonarQube analysis
       run: |
         ./gradlew sonarqube \
-        -Dsonar.projectKey=${{ github.event.repository.name }} \
-        -Dsonar.organization=devops-v7 \
-        -Dsonar.host.url=https://sonarcloud.io \
         -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+        -Dsonar.host.url=https://sonarcloud.io \
+        -Dsonar.organization=devops-v7 \
+        -Dsonar.projectKey=devops-v7_pet-clinic 
         -Dsonar.branch.name=feat-devsecops
+
+
+
