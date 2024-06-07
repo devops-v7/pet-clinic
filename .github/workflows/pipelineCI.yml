@@ -61,7 +61,7 @@ jobs:
       run: |
         ./gradlew sonarqube \
         -Dsonar.projectKey=${{ github.event.repository.name }} \
-        -Dsonar.organization=curso-devsecops-usach-test \
+        -Dsonar.organization=devops-v7 \
         -Dsonar.host.url=https://sonarcloud.io \
         -Dsonar.login=${{ secrets.TEST_DEVOPS }} \
         -Dsonar.branch.name=feat-devsecops
