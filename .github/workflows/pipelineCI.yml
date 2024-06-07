@@ -33,15 +33,15 @@ jobs:
       id: validateProjectOnSonar
       run: |
         set +e
-        curl -f -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{ github.event.repository.name }}' -d 'project=${{ github.event.repository.name }}' -d 'organization=devops-v7' -d 'visibility=public'
+        curl -f -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=devops-v7_pet-clinic' -d 'project=devops-v7_pet-clinic' -d 'organization=devops-v7' -d 'visibility=public'
         if [ $? -ne 0 ]; then
           echo "Proyecto ya existe en Sonarcloud"
           echo "::set-output name=proyectoExiste::1"
         else
-          echo "Proyecto ${{ github.event.repository.name }} creado exitosamente en Sonarcloud"
+          echo "Proyecto devops-v7_pet-clinic creado exitosamente en Sonarcloud"
           
           echo "Se establece rama main como rama por defecto"
-          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/set_branch_type' -d 'name=main' -d 'project=${{ github.event.repository.name }}'
+          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/set_branch_type' -d 'name=main' -d 'project=devops-v7_pet-clinic'
         fi
         set -e
 
@@ -71,14 +71,17 @@ jobs:
       run: | 
         chmod 777 gradlew
 
+    - name: Print SonarQube Variables
+      run: |
+        echo "Project Key: devops-v7_pet-clinic"
+        echo "Organization: devops-v7"
+        echo "Token: ${{ secrets.SONAR_TOKEN }}"
+
     - name: Run SonarQube analysis
       run: |
-        ./gradlew sonarqube \
+        ./gradlew sonarqube --stacktrace --info \
         -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
         -Dsonar.host.url=https://sonarcloud.io \
         -Dsonar.organization=devops-v7 \
-        -Dsonar.projectKey=devops-v7_pet-clinic 
+        -Dsonar.projectKey=devops-v7_pet-clinic \
         -Dsonar.branch.name=feat-devsecops
-
-
-
