@@ -25,6 +25,7 @@ jobs:
 
     - name: Validando tipo de proyecto
       id: tipoProyecto
+      if: step.validateProjectOnSonar.outputs.protectoExiste == '1'
       run: |
         if [ -f "build.gradle" ]; then
           echo "Proyecto Java"
