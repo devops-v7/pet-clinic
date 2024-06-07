@@ -17,11 +17,13 @@ jobs:
 
     - name: Checkout code
       uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
 
     - name: Hola Mundo
       run: | 
         echo 'Hola mundo!'
-    
+
     - name: Build
       run: | 
         chmod 777 gradlew
@@ -68,7 +70,7 @@ jobs:
     - name: Enable execution gradlew
       run: | 
         chmod 777 gradlew
-    
+
     - name: Run SonarQube analysis
       run: |
         ./gradlew sonarqube \
