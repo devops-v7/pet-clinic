@@ -23,7 +23,7 @@ jobs:
         chmod 777 gradlew
         ./gradlew build
 
-    -name: Validando tipo de proyecto
+    - name: Validando tipo de proyecto
       id: tipoProyecto
       run: |
         if [ -f "build.gradle" ]; then
@@ -35,16 +35,13 @@ jobs:
           sed -i '/id '\''java'\''/a \ \ \ \ id '\''org.sonarqube'\'' version '\''3.3'\''' build.gradle
           echo "El plugin de sonarqube no estaba presente y se ha añadido en build.gradle"
           cat build.gradle
-        fi  
-      else  
-        echo "Tipo de proyecto"
-      fi
+        fi
 
     - name: Validando existencia de proyecto en Sonarcloud
       id: validateProjectOnSonar
       run: |
         set +e
-        curl -f -x POST -u '${{secrets.TEST_DEVOPS}}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{github.event.repository.name}}' -d 'project=${{github.event.repository.name}}' -d 'organization=devops-v7' -d 'visibility=public'
+        curl -f -X POST -u '${{secrets.TEST_DEVOPS}}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{github.event.repository.name}}' -d 'project=${{github.event.repository.name}}' -d 'organization=devops-v7' -d 'visibility=public'
         if [ $? -ne 0 ]
         then
           echo "Proyecto ya existe en Sonarcloud"
@@ -54,13 +51,14 @@ jobs:
           echo "se establece rama main como rama por defecto"
           curl -X POST -u '${{secrets.TEST_DEVOPS}}:' 'https://sonarcloud.io/api/projects_branches/rename' -d 'name=main' -d 'project=${{github.event.repository.name}}'
         fi
+
     - name: Enable execution gradlew
       run: |
         chmod 777 gradlew
 
     - name: Run sonarqube analysis  
       run: |
-        ./graldew sonarqube \
+        ./gradlew sonarqube \
         -Dsonar.projectKey=${{ github.event.repository.name }} \
         -Dsonar.organization=curso-devsecops-usach-test \
         -Dsonar.host.url=https://sonarcloud.io \
