@@ -30,8 +30,6 @@ jobs:
     - name: Validando existencia de proyecto en SonarCloud
       id: validateProjectOnSonar
       run: |
-        #pwd
-        #ls -R
         set +e
         curl -f -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{ github.event.repository.name }}' -d 'project=${{ github.event.repository.name }}' -d 'organization=devops-v7' -d 'visibility=public'
         if [ $? -ne 0 ]; then
@@ -41,7 +39,7 @@ jobs:
           echo "Proyecto ${{ github.event.repository.name }} creado exitosamente en Sonarcloud"
           
           echo "Se establece rama main como rama por defecto"
-          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/rename' -d 'name=main' -d 'project=${{ github.event.repository.name }}'
+          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/set_branch_type' -d 'name=main' -d 'project=${{ github.event.repository.name }}'
         fi
         set -e
 
@@ -67,7 +65,6 @@ jobs:
           echo "Tipo de proyecto desconocido"
         fi
 
-
     - name: Enable execution gradlew
       run: | 
         chmod 777 gradlew
@@ -78,5 +75,5 @@ jobs:
         -Dsonar.projectKey=${{ github.event.repository.name }} \
         -Dsonar.organization=devops-v7 \
         -Dsonar.host.url=https://sonarcloud.io \
-        -Dsonar.login=${{ secrets.SONAR_TOKEN }} \
+        -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
         -Dsonar.branch.name=feat-devsecops
