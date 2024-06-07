@@ -32,11 +32,25 @@ jobs:
         then
           echo "El plugin de sonarqube ya esta presente en build.gradle"
         else  
-          sed -i '/id "org.sonarqube"/a id "org.sonarqube" version "3.3"' build.gradle
+          sed -i '/id '\''java'\''/a \ \ \ \ id '\''org.sonarqube'\'' version '\''3.3'\''' build.gradle
           echo "El plugin de sonarqube no estaba presente y se ha añadido en build.gradle"
           cat build.gradle
         fi  
       else  
         echo "Tipo de proyecto"
       fi
-           
+
+    - name: Validando existencia de proyecto en Sonarcloud
+      id: validateProjectOnSonar
+      run: |
+        set +e
+        curl -f -x POST -u '${{secrets.TEST_DEVOPS}}:' 'https://sonarcloud.io/api/projects/create' -d 'name=${{github.event.repository.name}}' -d 'project=${{github.event.repository.name}}' -d 'organization=devops-v7' -d 'visibility=public'
+        if [ $? -ne 0 ]
+        then
+          echo "Proyecto ya existe en Sonarcloud"
+        else
+          echo "Proyecto ${{github.event.repository.name}} fue creado exitosamente en Sonarcloud"
+
+          echo "se establece rama main como rama por defecto"
+          curl -X POST -u '${{secrets.TEST_DEVOPS}}:' 'https://sonarcloud.io/api/projects_branches/rename' -d 'name=main' -d 'project=${{github.event.repository.name}}'
+        fi
