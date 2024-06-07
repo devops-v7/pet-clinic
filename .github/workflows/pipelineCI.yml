@@ -24,7 +24,7 @@ jobs:
         ./gradlew build
 
     -name: Validando tipo de proyecto
-      id: tipo proyecto
+      id: tipoProyecto
       run: |
         if [ -f "build.gradle" ]; then
           echo "Proyecto Java"
@@ -54,3 +54,15 @@ jobs:
           echo "se establece rama main como rama por defecto"
           curl -X POST -u '${{secrets.TEST_DEVOPS}}:' 'https://sonarcloud.io/api/projects_branches/rename' -d 'name=main' -d 'project=${{github.event.repository.name}}'
         fi
+    - name: Enable execution gradlew
+      run: |
+        chmod 777 gradlew
+
+    - name: Run sonarqube analysis  
+      run: |
+        ./graldew sonarqube \
+        -Dsonar.projectKey=${{ github.event.repository.name }} \
+        -Dsonar.organization=curso-devsecops-usach-test \
+        -Dsonar.host.url=https://sonarcloud.io \
+        -Dsonar.login=${{ secrets.TEST_DEVOPS }} \
+        -Dsonar.branch.name=feat-devsecops
