@@ -22,3 +22,21 @@ jobs:
       run:  |
         chmod 777 gradlew
         ./gradlew build
+
+    -name: Validando tipo de proyecto
+      id: tipo proyecto
+      run: |
+        if [ -f "build.gradle" ]; then
+          echo "Proyecto Java"
+        elif grep -q 'id "org.sonarqube" version "3.3"' build.gradle
+        then
+          echo "El plugin de sonarqube ya esta presente en build.gradle"
+        else  
+          sed -i '/id "org.sonarqube"/a id "org.sonarqube" version "3.3"' build.gradle
+          echo "El plugin de sonarqube no estaba presente y se ha añadido en build.gradle"
+          cat build.gradle
+        fi  
+      else  
+        echo "Tipo de proyecto"
+      fi
+           
