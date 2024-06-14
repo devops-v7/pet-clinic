@@ -99,8 +99,6 @@ jobs:
     - name: Build
       id: build
       run: |
-        #pwd
-        #ls -R
         if [ -f "build.gradle" ]
         then
           echo "Utiliza build.gradle, proyecto Java"
@@ -134,7 +132,7 @@ jobs:
     - name: Upload JAR
       uses: actions/upload-artifact@master
       with:
-        name: Depcheck report
+        name: JAR
         path: ${{github.workspace}}/build/libs/spring-petclinic-2.6.0.jar
 
 #-------------------------DOCKER BUILD-------------------------
@@ -159,6 +157,6 @@ jobs:
         name: JAR
         path: ${{github.workspace}}
 
-    -name: Build Docker
+    - name: Build Docker
       run: |
-        docker build --tag cursodevsecops-test:latest
+        docker build --tag cursodevsecops-test:latest .
