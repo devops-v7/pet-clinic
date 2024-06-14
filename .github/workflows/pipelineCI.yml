@@ -133,10 +133,10 @@ jobs:
 
 #-------------------------DOCKER BUILD-------------------------
 
-Dockerbuild:
-  needs: SCA
-  runs on: self-hosted
-  steps: 
+  Dockerbuild:
+    needs: SCA
+    runs-on: self-hosted
+    steps: 
 
-  - name: Checkout code
-    uses: actions/checkout@v2
+    - name: Checkout code
+      uses: actions/checkout@v2
