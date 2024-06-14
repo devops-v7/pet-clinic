@@ -8,200 +8,187 @@ jobs:
   SAST:
     runs-on: ubuntu-latest
     steps:
+      - name: Set up JDK 17
+        uses: actions/setup-java@v2
+        with:
+          java-version: '17'
+          distribution: 'adopt'
 
-    - name: Set up JDK 17
-      uses: actions/setup-java@v2
-      with:
-        java-version: '17'
-        distribution: 'adopt'
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
 
-    - name: Checkout code
-      uses: actions/checkout@v2
-      with:
-        fetch-depth: 0
+      - name: Hola Mundo
+        run: | 
+          echo 'Hola mundo!'
 
-    - name: Hola Mundo
-      run: | 
-        echo 'Hola mundo!'
+      - name: Build
+        run: | 
+          chmod 777 gradlew
+          ./gradlew build
 
-    - name: Build
-      run: | 
-        chmod 777 gradlew
-        ./gradlew build
-
-    - name: Validando existencia de proyecto en SonarCloud
-      id: validateProjectOnSonar
-      run: |
-        set +e
-        curl -f -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=devops-v7_pet-clinic' -d 'project=devops-v7_pet-clinic' -d 'organization=devops-v7' -d 'visibility=public'
-        if [ $? -ne 0 ]; then
-          echo "Proyecto ya existe en Sonarcloud"
-          echo "::set-output name=proyectoExiste::1"
-        else
-          echo "Proyecto devops-v7_pet-clinic creado exitosamente en Sonarcloud"
-          
-          echo "Se establece rama main como rama por defecto"
-          curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/set_branch_type' -d 'project=devops-v7_pet-clinic' -d 'branch=main' -d 'type=MAIN'
-        fi
-        set -e
-
-    - name: Validando tipo de proyecto
-      id: tipoProyecto
-      if: steps.validateProjectOnSonar.outputs.proyectoExiste == '1'
-      run: |
-        pwd
-        ls -R
-        if [ -f "build.gradle" ]
-        then
-          echo "Proyecto Java"
-          if grep -q 'id "org.sonarqube" version "3.3"' build.gradle
-          then
-            echo "El plugin de SonarCloud ya está presente en build.gradle"
+      - name: Validando existencia de proyecto en SonarCloud
+        id: validateProjectOnSonar
+        run: |
+          set +e
+          curl -f -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/projects/create' -d 'name=devops-v7_pet-clinic' -d 'project=devops-v7_pet-clinic' -d 'organization=devops-v7' -d 'visibility=public'
+          if [ $? -ne 0 ]; then
+            echo "Proyecto ya existe en Sonarcloud"
+            echo "::set-output name=proyectoExiste::1"
           else
-            sed -i '/id '\''java'\''/a \ \ \ \ id '\''org.sonarqube'\'' version '\''3.3'\''' build.gradle
-            echo "El plugin de SonarCloud no estaba presente y se ha sido añadido a build.gradle"
-            cat build.gradle
+            echo "Proyecto devops-v7_pet-clinic creado exitosamente en Sonarcloud"
+            echo "Se establece rama main como rama por defecto"
+            curl -X POST -u '${{ secrets.SONAR_TOKEN }}:' 'https://sonarcloud.io/api/project_branches/set_branch_type' -d 'project=devops-v7_pet-clinic' -d 'branch=main' -d 'type=MAIN'
+          fi
+          set -e
+
+      - name: Validando tipo de proyecto
+        id: tipoProyecto
+        if: steps.validateProjectOnSonar.outputs.proyectoExiste == '1'
+        run: |
+          pwd
+          ls -R
+          if [ -f "build.gradle" ]
+          then
+            echo "Proyecto Java"
+            if grep -q 'id "org.sonarqube" version "3.3"' build.gradle
+            then
+              echo "El plugin de SonarCloud ya está presente en build.gradle"
+            else
+              sed -i '/id '\''java'\''/a \ \ \ \ id '\''org.sonarqube'\'' version '\''3.3'\''' build.gradle
+              echo "El plugin de SonarCloud no estaba presente y se ha sido añadido a build.gradle"
+              cat build.gradle
+            fi
+          else
+            echo "Tipo de proyecto desconocido"
           fi
 
-        else
-          echo "Tipo de proyecto desconocido"
-        fi
+      - name: Enable execution gradlew
+        run: | 
+          chmod 777 gradlew
 
-    - name: Enable execution gradlew
-      run: | 
-        chmod 777 gradlew
+      - name: Print SonarQube Variables
+        run: |
+          echo "Project Key: devops-v7_pet-clinic"
+          echo "Organization: devops-v7"
+          echo "Token: ${{ secrets.SONAR_TOKEN }}"
 
-    - name: Print SonarQube Variables
-      run: |
-        echo "Project Key: devops-v7_pet-clinic"
-        echo "Organization: devops-v7"
-        echo "Token: ${{ secrets.SONAR_TOKEN }}"
+      - name: Run SonarQube analysis
+        run: |
+          ./gradlew sonarqube --stacktrace --info \
+          -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
+          -Dsonar.host.url=https://sonarcloud.io \
+          -Dsonar.organization=devops-v7 \
+          -Dsonar.projectKey=devops-v7_pet-clinic \
+          -Dsonar.branch.name=feat-devsecops
 
-    - name: Run SonarQube analysis
-      run: |
-        ./gradlew sonarqube --stacktrace --info \
-        -Dsonar.token=${{ secrets.SONAR_TOKEN }} \
-        -Dsonar.host.url=https://sonarcloud.io \
-        -Dsonar.organization=devops-v7 \
-        -Dsonar.projectKey=devops-v7_pet-clinic \
-        -Dsonar.branch.name=feat-devsecops
-
-#--------------------- SCA -------------------------------------------
-      
   SCA:
     needs: SAST
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v2      
+
+      - name: Build
+        id: build
+        run: |
+          if [ -f "build.gradle" ]
+          then
+            echo "Utiliza build.gradle, proyecto Java"
+            echo "Se habilita permiso de ejecución de archivo gradlew"
+            chmod 777 gradlew
+            ./gradlew build
+          else
+            echo "Otro tipo de proyecto"
+          fi
     
-    - name: Checkout code
-      uses: actions/checkout@v2      
+      - name: Dependency Check
+        uses: dependency-check/Dependency-Check_Action@1.1.0
+        env:
+          JAVA_HOME: /opt/jdk
+        id: Depcheck
+        with:
+          project: '${{ github.event.repository.name }}'
+          path: '.'
+          format: 'HTML'
+          out: 'reports'
+          args: >
+            --failOnCVSS 7
+            --enableRetired
 
-    - name: Build
-      id: build
-      run: |
-        if [ -f "build.gradle" ]
-        then
-          echo "Utiliza build.gradle, proyecto Java"
-          echo "Se habilita permiso de ejecución de archivo gradlew"
-          chmod 777 gradlew
-          ./gradlew build
-        else
-          echo "Otro tipo de proyecto"
-        fi
-    
-    - name: Dependency Check
-      uses: dependency-check/Dependency-Check_Action@1.1.0
-      env:
-        JAVA_HOME: /opt/jdk
-      id: Depcheck
-      with:
-        project: '${{ github.event.repository.name }}'
-        path: '.'
-        format: 'HTML'
-        out: 'reports'
-        args: >
-          --failOnCVSS 7
-          --enableRetired
+      - name: Upload Test result
+        uses: actions/upload-artifact@master
+        with:
+          name: Depcheck report
+          path: ${{github.workspace}}/reports
 
-    - name: Upload Test result
-      uses: actions/upload-artifact@master
-      with:
-        name: Depcheck report
-        path: ${{github.workspace}}/reports
-
-    - name: Upload JAR
-      uses: actions/upload-artifact@master
-      with:
-        name: JAR
-        path: ${{github.workspace}}/build/libs/spring-petclinic-2.6.0.jar
-
-#-------------------------DOCKER BUILD-------------------------
+      - name: Upload JAR
+        uses: actions/upload-artifact@master
+        with:
+          name: JAR
+          path: ${{github.workspace}}/build/libs/spring-petclinic-2.6.0.jar
 
   Dockerbuild:
     needs: SCA
     runs-on: self-hosted
     steps: 
+      - name: Checkout code
+        uses: actions/checkout@v2
 
-    - name: Checkout code
-      uses: actions/checkout@v2
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Docker Login
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USER }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Download JAR
+        uses: actions/download-artifact@v2
+        with:
+          name: JAR
+          path: ${{github.workspace}}
 
-    - name: Download JAR
-      uses: actions/download-artifact@v2
-      with:
-        name: JAR
-        path: ${{github.workspace}}
+      - name: Build Docker
+        run: |
+          docker build --tag roderico/cursodevsecops-test:latest .
 
-    - name: Build Docker
-      run: |
-        docker build --tag cursodevsecops-test:latest .
-
-    - name: Push Docker
-      run: |  
-        docker push cursodevsecops-test:latest
-
-#-------------------------DOCKER SCAN-------------------------
+      - name: Push Docker
+        run: |  
+          docker push roderico/cursodevsecops-test:latest
 
   DockerScan:
     needs: Dockerbuild
     runs-on: ubuntu-latest
     steps: 
+      - name: Docker Login
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-    - name: Docker Login
-      uses: docker/login-action@v3
-      with:
-        username: ${{ secrets.DOCKER_USER }}
-        password: ${{ secrets.DOCKER_PASSWORD }}
+      - name: Pull de la imagen Docker
+        run: |
+          docker pull roderico/cursodevsecops-test:latest
 
-    - name: Pull de la imagen Docker
-      run: |
-        docker pull cursodevsecops-test:latest
+      - name: run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'roderico/cursodevsecops-test:latest'
+          format: 'table'
+          exit-code: '1'
+          ignore-unfixed: true
+          vuln-type: 'os,library'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          timeout: '5m'
 
-    - name: run Trivy vulnerability scanner
-      uses: aquasecurity/trivy-action@master
-      with:
-        image-ref: 'cursodevsecops-test:latest'
-        format: 'table'
-
-    - name: Push Docker
-      run: |  
-        docker push cursodevsecops-test:latest
-
-#-------------------------DAST-------------------------
-
-DAST:
-  needs: DockerScan
-  runs-on: self-hosted
-  steps:
-
-  - name: Despliegue Aplicacion
-    run: |
-      docker run -d -p 8085:8085 pet-clinic-deploy -d cursodevsecops-test:latest
-  - name: Sleep
-    run: |
-      sleep 3
+  DAST:
+    needs: DockerScan
+    runs-on: self-hosted
+    steps:
+      - name: Despliegue Aplicacion
+        run: |
+          docker run -d -p 8085:8085 roderico/cursodevsecops-test:latest
+          
+      - name: Sleep
+        run: |
+          sleep 3
